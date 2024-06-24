@@ -41,8 +41,9 @@ But after the checking finished, I'll provides additional info about contributin
 ## Built With
 
 * [Bun](https://bun.sh/)
-* [Tailwind CSS](https://tailwindcss.com/)
 * [React](https://reactjs.org/)
+* [Tailwind CSS](https://tailwindcss.com/)
+* [daisyUI](https://daisyui.com/)
 
 ## Versioning
 
