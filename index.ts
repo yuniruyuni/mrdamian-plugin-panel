@@ -10,19 +10,15 @@ export default class Panel extends Component<PanelConfig> {
     return async (req: Request): Promise<Response> => {
       const url = new URL(req.url);
       if (url.pathname === "/") {
-        const f = Bun.file(path.join(import.meta.dir, "index.html"));
+        const f = Bun.file(path.join(import.meta.dir, "/index.html"));
         return new Response(f, { headers: { "Content-Type": f.type } });
       }
       if (url.pathname === "/index.js") {
-        console.log(`__dirname: ${__dirname}`);
-        console.log(`import.meta.dir: ${import.meta.dir}`);
-        console.log("fetching index.js");
-        const f = Bun.file(path.join(import.meta.dir, "root.js"));
-        console.log("in reality, it's root.js");
+        const f = Bun.file(path.join(import.meta.dir, "/root.js"));
         return new Response(f, { headers: { "Content-Type": f.type } });
       }
       if (url.pathname === "/index.css") {
-        const f = Bun.file(path.join(import.meta.dir, "index.css"));
+        const f = Bun.file(path.join(import.meta.dir, "/index.css"));
         return new Response(f, { headers: { "Content-Type": f.type } });
       }
       if (url.pathname === "/panels") {

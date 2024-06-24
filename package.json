@@ -5,12 +5,14 @@
   "homepage": "https://github.com/yuniruyuni/MrDamian/README.ja.md",
   "repository": "https://github.com/yuniruyuni/MrDamian/",
   "bugs": "https://github.com/yuniruyuni/MrDamian/issues",
-  "version": "0.0.3",
+  "version": "0.0.8",
   "author": {
     "name": "yuniruyuni",
     "email": "yuniruyuni@gmail.com"
   },
   "files": [
+    "index.ts",
+    "tsconfig.json",
     "dist"
   ],
   "keywords": [
@@ -19,7 +21,6 @@
   "license": "MIT",
   "main": "dist/index.js",
   "type": "module",
-  "module": "es2022",
   "scripts": {
     "build": "run-s build:frontend build:backend",
     "build:backend": "NODE_ENV=production bun build --minify --outdir=dist/ index.ts",
