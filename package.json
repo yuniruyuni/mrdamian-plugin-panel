@@ -5,7 +5,7 @@
   "homepage": "https://github.com/yuniruyuni/MrDamian/README.ja.md",
   "repository": "https://github.com/yuniruyuni/MrDamian/",
   "bugs": "https://github.com/yuniruyuni/MrDamian/issues",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "author": {
     "name": "yuniruyuni",
     "email": "yuniruyuni@gmail.com"
@@ -19,13 +19,12 @@
     "mrdamian"
   ],
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "index.ts",
   "type": "module",
   "scripts": {
-    "build": "run-s build:frontend build:backend",
-    "build:backend": "NODE_ENV=production bun build --minify --outdir=dist/ index.ts",
+    "build": "run-s build:frontend",
     "build:frontend": "run-p 'build:frontend:**'",
-    "build:frontend:bundle": "NODE_ENV=production bun build --outdir=./dist/ root.tsx",
+    "build:frontend:bundle": "NODE_ENV=production bun build --outdir=./dist/ index.tsx",
     "build:frontend:html": "mkdir -p dist && cp index.html dist/index.html",
     "build:frontend:tailwind": "tailwindcss -i index.css -o ./dist/index.css",
     "check": "biome check --write",

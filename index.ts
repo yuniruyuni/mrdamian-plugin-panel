@@ -10,15 +10,15 @@ export default class Panel extends Component<PanelConfig> {
     return async (req: Request): Promise<Response> => {
       const url = new URL(req.url);
       if (url.pathname === "/") {
-        const f = Bun.file(path.join(import.meta.dir, "/index.html"));
+        const f = Bun.file(path.join(import.meta.dir, "dist/index.html"));
         return new Response(f, { headers: { "Content-Type": f.type } });
       }
       if (url.pathname === "/index.js") {
-        const f = Bun.file(path.join(import.meta.dir, "/root.js"));
+        const f = Bun.file(path.join(import.meta.dir, "dist/index.js"));
         return new Response(f, { headers: { "Content-Type": f.type } });
       }
       if (url.pathname === "/index.css") {
-        const f = Bun.file(path.join(import.meta.dir, "/index.css"));
+        const f = Bun.file(path.join(import.meta.dir, "dist/index.css"));
         return new Response(f, { headers: { "Content-Type": f.type } });
       }
       if (url.pathname === "/panels") {
