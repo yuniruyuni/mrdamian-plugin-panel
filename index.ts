@@ -1,8 +1,10 @@
 import path from "node:path";
-import { Component } from "mrdamian/model/component";
-import type { ComponentConfig } from "mrdamian/model/parameters";
-import type { Fetch } from "mrdamian/model/server";
-import type { Field } from "mrdamian/model/variable";
+import {
+	Component,
+	type ComponentConfig,
+	type Fetch,
+	type Field,
+} from "mrdamian-plugin";
 
 export type PanelConfig = ComponentConfig;
 export default class Panel extends Component<PanelConfig> {
