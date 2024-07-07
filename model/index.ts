@@ -18,11 +18,16 @@ export type Label = {
     text: string;
 };
 
+// Group.
+export type Group = {
+    type: "group";
+    forms: Form[];
+};
 
 export type Form = {
-    type: "button" | "toggle";
+    type: "button" | "toggle" | "label" | "group";
     name: string;
-} & (Button | Toggle);
+} & (Button | Toggle | Label | Group);
 
 
 export type Status = {

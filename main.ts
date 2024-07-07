@@ -1,5 +1,5 @@
 import path from "node:path";
-import { AutoRouter } from "itty-router";
+import { AutoRouter, json } from "itty-router";
 import {
 	Component,
 	type ComponentConfig,
@@ -14,21 +14,36 @@ const sendFile = (rel: string) =>{
 	return new Response(f, { headers: { "Content-Type": f.type } });
 }
 
-export type PanelConfig = ComponentConfig & {
-	args: {
-		forms: Form[];
-	}
+export type InitConfig = ComponentConfig & {
+	action?: "" | "init";
+	forms: Form[];
 };
 
+export type UpdateConfig = ComponentConfig & {
+	action: "update";
+	args: Status;
+};
+
+export type PanelConfig = ComponentConfig & {
+	action?: "" | "init" | "update";
+} & (InitConfig | UpdateConfig);
+
+function isInitConfig(config: PanelConfig): config is InitConfig {
+	if( config.action === undefined ) return true;
+	if( config.action === "" ) return true;
+	if( config.action === "init" ) return true;
+	return false;
+}
+
 export default class Panel extends Component<PanelConfig> {
-	latestConfig?: PanelConfig;
+	config?: InitConfig;
 	statuses: Map<string, Status> = new Map();
 
 	currentForms(): FormWithStatus[] {
-		if (!this.latestConfig) {
+		if (!this.config) {
 			return [];
 		}
-		return this.latestConfig.args.forms.map((form) => ({
+		return this.config.forms.map((form) => ({
 			...form,
 			...(this.statuses.get(form.name) ?? {
 				name: form.name,
@@ -37,61 +52,74 @@ export default class Panel extends Component<PanelConfig> {
 		}));
 	}
 
-	async fetch(config: PanelConfig): Promise<Fetch | undefined> {
+	async fetch(): Promise<Fetch | undefined> {
 		const router = AutoRouter();
 
 		return router
 			.get("/", async () => sendFile("dist/index.html"))
 			.get("/index.js", async () => sendFile("dist/index.js"))
 			.get("/index.css", async () => sendFile("dist/index.css"))
-			.get(
-				"/forms",
-				async () =>
-					new Response(JSON.stringify(this.currentForms()), {
-						status: 200,
-						headers: { "Content-Type": "application/json" },
-					}),
-			)
-			.put("/forms", async (req) => {
+			.get("/forms", async () => json(this.currentForms()))
+			.put("/forms", async (req: Request) => {
 				const content = await req.json();
 				this.statuses.set(content.name, content);
-				return new Response(JSON.stringify({ status: "ok" }), {
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				});
+				return json({ status: "ok" });
 			})
-			.post("/forms", async (req) => {
+			.post("/forms", async (req: Request) => {
 				const content = await req.json();
-				this.emit({
-					[content.name]: {
-						click: true,
-					},
-				});
-				return new Response(JSON.stringify({ status: "ok" }), {
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				});
+				this.emit({ [content.name]: true });
+				return json({ status: "ok" });
 			})
 			.fetch;
 	}
 
 	public async initialize(config: PanelConfig): Promise<void> {
-		this.latestConfig = config;
+		if( !isInitConfig(config) ) return;
+		this.config = config;
+		const setupStatuses = (forms: Form[]) => {
+			for( const form of forms ) {
+				if( form.type === "group" ) {
+					return setupStatuses(form.forms);
+				}
+				// TODO: write type-wise default status deifnition.
+				this.statuses.set(form.name, { name: form.name, status: false });
+			}
+		};
+		setupStatuses(config.forms);
 	}
 
 	public async process(config: PanelConfig): Promise<Field> {
-		this.latestConfig = config;
+		if( isInitConfig(config) ) {
+			const writeField = (forms: Form[]) => {
+				let field = {};
+				for (const form of config.forms) {
+					if( form.type === "group" ) {
+						field = {
+							...field,
+							[form.name]: writeField(form.forms),
+						};
+					}
 
-		let field = {};
-		for (const form of config.args.forms) {
-			if (form.type === "toggle") {
-				field = {
-					...field,
-					[form.name]: this.statuses.get(form.name)?.status,
-				};
-			}
+					if (form.type === "toggle") {
+						field = {
+							...field,
+							[form.name]: this.statuses.get(form.name)?.status,
+						};
+					}
+				}
+				return field;
+			};
+			return writeField(config.forms);
 		}
 
-		return field;
+		if( config.action === "update" ) {
+			const status = config.args;
+			const current = this.statuses.get(status.name);
+			if( !current ) return undefined;
+			this.statuses.set(status.name, status);
+			return undefined;
+		}
+
+		return undefined;
 	}
 }
