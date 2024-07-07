@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "itty-router": "^5.0.17",
     "mrdamian-plugin": "^0.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
