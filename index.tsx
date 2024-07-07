@@ -1,36 +1,68 @@
-import type { FC } from "react";
-import React, { useEffect, useState } from "react";
+import React, { type FC, useEffect, useState, useCallback } from "react";
 import ReactDOM from "react-dom/client";
 
-type Panel = {
-  type: "button" | "toggle";
-  name: string;
-};
+import type { FormWithStatus, Status } from "./model";
 
 const Root: FC = () => {
-  const [panels, setPanels] = useState<Panel[]>([]);
+  const [forms, setForms] = useState<FormWithStatus[]>([]);
 
+  // TODO: use tanstack-query or swr...
   useEffect(() => {
     (async () => {
-      const res = await fetch("./panels");
+      const res = await fetch("./forms");
       const json = await res.json();
-      setPanels(json as Panel[]);
+	  console.log(json);
+      setForms(json as FormWithStatus[]);
     })();
   }, []);
 
-  return (
-    <div>
-      {panels.map((panel) => (
-        <button
-          type="button"
-          key={panel.name}
-          className="btn"
-        >
-          {panel.name}
-        </button>
-      ))}
-    </div>
-  );
+  const updateStatus = useCallback(async (status: Status) => {
+	await fetch("./forms", {
+		method: "PUT",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(status),
+	});
+  }, []);
+
+  const emitClickEvent = useCallback(async (name: string) => {
+	await fetch("./forms", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({name, click: true}),
+	});
+  }, []);
+
+  return forms.map((form) => (
+			<div key={form.name}>
+				{form.type === "button" && (
+					<button
+						type="button"
+						className="btn"
+						onClick={() => emitClickEvent(form.name)}
+					>
+						{form.name}
+					</button>
+				)}
+				{form.type === "toggle" && (
+					<input
+						type="checkbox"
+						className="toggle"
+						aria-label={form.name}
+						onClick={() =>
+							updateStatus({
+								name: form.name,
+								status: !form.status,
+							})
+						}
+						checked={form.status}
+					/>
+				)}
+			</div>
+		));
 };
 
 const rootElm = document.getElementById("root");

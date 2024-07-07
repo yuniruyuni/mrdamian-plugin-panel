@@ -5,13 +5,13 @@
   "homepage": "https://github.com/yuniruyuni/MrDamian/README.ja.md",
   "repository": "https://github.com/yuniruyuni/MrDamian/",
   "bugs": "https://github.com/yuniruyuni/MrDamian/issues",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "author": {
     "name": "yuniruyuni",
     "email": "yuniruyuni@gmail.com"
   },
   "files": [
-    "index.ts",
+    "main.ts",
     "tsconfig.json",
     "dist"
   ],
@@ -19,9 +19,15 @@
     "mrdamian"
   ],
   "license": "MIT",
-  "main": "index.ts",
+  "main": "main.ts",
   "type": "module",
   "scripts": {
+    "start": "run-s start:frontend start:tester",
+    "start:tester": "bun run --hot --bun test.ts",
+    "start:frontend": "run-p 'build:frontend:**'",
+    "start:frontend:bundle": "bun build --watch --outdir=./dist/ index.tsx",
+    "start:frontend:html": "mkdir -p dist && cp index.html dist/index.html",
+    "start:frontend:tailwind": "tailwindcss --watch -i index.css -o ./dist/index.css",
     "build": "run-s build:frontend",
     "build:frontend": "run-p 'build:frontend:**'",
     "build:frontend:bundle": "NODE_ENV=production bun build --outdir=./dist/ index.tsx",
@@ -37,7 +43,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "itty-router": "^5.0.17",
-    "mrdamian-plugin": "^0.0.5",
+    "mrdamian-plugin": "^0.0.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
