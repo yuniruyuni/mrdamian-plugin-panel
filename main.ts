@@ -75,6 +75,10 @@ export default class Panel extends Component<PanelConfig> {
 			.fetch;
 	}
 
+	public async initialize(config: PanelConfig): Promise<void> {
+		this.latestConfig = config;
+	}
+
 	public async process(config: PanelConfig): Promise<Field> {
 		this.latestConfig = config;
 
