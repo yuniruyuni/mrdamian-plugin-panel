@@ -1,40 +1,19 @@
-import React, { type FC, useEffect, useState, useCallback } from "react";
+import React, { type FC } from "react";
 import ReactDOM from "react-dom/client";
-
-import type { FormWithStatus, Status } from "./model";
+import useSWR from "swr";
+import useSWRMutation from "swr/mutation";
+import { fetcher } from "./fetcher";
+import type { FormWithStatus } from "./model";
 
 const Root: FC = () => {
-  const [forms, setForms] = useState<FormWithStatus[]>([]);
+  const { data: forms, error, isLoading } = useSWR<FormWithStatus[]>("./forms", fetcher.get);
 
-  // TODO: use tanstack-query or swr...
-  useEffect(() => {
-    (async () => {
-      const res = await fetch("./forms");
-      const json = await res.json();
-	  console.log(json);
-      setForms(json as FormWithStatus[]);
-    })();
-  }, []);
+  const { trigger: updateStatus } = useSWRMutation("./forms", fetcher.put);
+  const { trigger: emitClickEvent } = useSWRMutation("./forms", fetcher.post);
 
-  const updateStatus = useCallback(async (status: Status) => {
-	await fetch("./forms", {
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify(status),
-	});
-  }, []);
-
-  const emitClickEvent = useCallback(async (name: string) => {
-	await fetch("./forms", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({name, click: true}),
-	});
-  }, []);
+  if( error ) return <div>Error: {error.message}</div>;
+  if( !forms ) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
 
   return forms.map((form) => (
 			<div key={form.name}>
@@ -42,7 +21,7 @@ const Root: FC = () => {
 					<button
 						type="button"
 						className="btn"
-						onClick={() => emitClickEvent(form.name)}
+						onClick={() => emitClickEvent({name: form.name, click: true})}
 					>
 						{form.name}
 					</button>
