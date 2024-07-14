@@ -39,8 +39,8 @@ const loop = async () => {
         },
       ],
     });
-	console.log(field);
-	await setTimeout(1000);
+    console.log(field);
+    await setTimeout(1000);
   }
 };
 loop();

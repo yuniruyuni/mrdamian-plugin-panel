@@ -10,14 +10,8 @@
     "name": "yuniruyuni",
     "email": "yuniruyuni@gmail.com"
   },
-  "files": [
-    "main.ts",
-    "tsconfig.json",
-    "dist"
-  ],
-  "keywords": [
-    "mrdamian"
-  ],
+  "files": ["main.ts", "tsconfig.json", "dist"],
+  "keywords": ["mrdamian"],
   "license": "MIT",
   "main": "main.ts",
   "type": "module",

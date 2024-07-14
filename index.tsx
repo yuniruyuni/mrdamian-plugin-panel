@@ -6,42 +6,46 @@ import { fetcher } from "./fetcher";
 import type { FormWithStatus } from "./model";
 
 const Root: FC = () => {
-  const { data: forms, error, isLoading } = useSWR<FormWithStatus[]>("./forms", fetcher.get);
+  const {
+    data: forms,
+    error,
+    isLoading,
+  } = useSWR<FormWithStatus[]>("./forms", fetcher.get);
 
   const { trigger: updateStatus } = useSWRMutation("./forms", fetcher.put);
   const { trigger: emitClickEvent } = useSWRMutation("./forms", fetcher.post);
 
-  if( error ) return <div>Error: {error.message}</div>;
-  if( !forms ) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!forms) return <div>Loading...</div>;
   if (isLoading) return <div>Loading...</div>;
 
   return forms.map((form) => (
-			<div key={form.name}>
-				{form.type === "button" && (
-					<button
-						type="button"
-						className="btn"
-						onClick={() => emitClickEvent({name: form.name, click: true})}
-					>
-						{form.name}
-					</button>
-				)}
-				{form.type === "toggle" && (
-					<input
-						type="checkbox"
-						className="toggle"
-						aria-label={form.name}
-						onClick={() =>
-							updateStatus({
-								name: form.name,
-								status: !form.status,
-							})
-						}
-						checked={form.status}
-					/>
-				)}
-			</div>
-		));
+    <div key={form.name}>
+      {form.type === "button" && (
+        <button
+          type="button"
+          className="btn"
+          onClick={() => emitClickEvent({ name: form.name, click: true })}
+        >
+          {form.name}
+        </button>
+      )}
+      {form.type === "toggle" && (
+        <input
+          type="checkbox"
+          className="toggle"
+          aria-label={form.name}
+          onClick={() =>
+            updateStatus({
+              name: form.name,
+              status: !form.status,
+            })
+          }
+          checked={form.status}
+        />
+      )}
+    </div>
+  ));
 };
 
 const rootElm = document.getElementById("root");
