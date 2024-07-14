@@ -4,14 +4,9 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 
 import { fetcher } from "./fetcher";
-import type {
-  Button as ButtonModel,
-  FormWithStatus,
-  Status,
-  Toggle as ToggleModel,
-} from "./model";
+import type * as Model from "./model";
 
-const Button: FC<ButtonModel & Status> = ({ name, status }) => {
+const Button: FC<Model.Button & Model.Status> = ({ name, status }) => {
   const { trigger: emitClickEvent } = useSWRMutation("./forms", fetcher.post);
   return (
     <button
@@ -24,7 +19,7 @@ const Button: FC<ButtonModel & Status> = ({ name, status }) => {
   );
 };
 
-const Toggle: FC<ToggleModel & Status> = ({ name, status }) => {
+const Toggle: FC<Model.Toggle & Model.Status> = ({ name, status }) => {
   const { trigger: updateStatus } = useSWRMutation("./forms", fetcher.put);
   return (<input
     type="checkbox"
@@ -40,7 +35,7 @@ const Root: FC = () => {
     data: forms,
     error,
     isLoading,
-  } = useSWR<FormWithStatus[]>("./forms", fetcher.get);
+  } = useSWR<Model.FormWithStatus[]>("./forms", fetcher.get);
 
   if (error) return <div>Error: {error.message}</div>;
   if (!forms) return <div>Loading...</div>;
