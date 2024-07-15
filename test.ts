@@ -1,75 +1,86 @@
 import { setTimeout } from "node:timers/promises";
 
 import Component from "./main";
-import type { Definition } from "./model/definition";
+import type { Cell } from "./model";
 
 const emit = {
   emit: () => {},
 };
 
-const defs: Definition[] = [
+const cells: Cell[] = [
   {
-    type: "group",
-    name: "group-1",
-    forms: [
+    name: "button-test",
+    emit: true,
+    discharge: false,
+    defs: [
       {
-        type: "button",
-        name: "button-test",
         text: "hoge",
+        color: "primary",
+        value: true,
       },
-      {
-        type: "toggle",
-        name: "toggle-test",
-        active: true,
-      },
-      {
-        type: "label",
-        name: "label-test",
-        text: "hogehoge",
-      },
-      {
-        type: "group",
-        name: "group-1-1",
-        forms: [
-          {
-            type: "button",
-            name: "button-test",
-            text: "hoge",
-          },
-          {
-            type: "toggle",
-            name: "toggle-test",
-            active: true,
-          },
-          {
-            type: "label",
-            name: "label-test",
-            text: "hogehoge",
-          },
-        ],
-      },
-    ],
+    ]
   },
   {
-    type: "group",
-    name: "group-2",
-    forms: [
+    name: "toggle-test",
+    emit: true,
+    discharge: false,
+    defs: [
       {
-        type: "button",
-        name: "button-test",
-        text: "hoge",
+        text: "on",
+        color: "neutral",
+        value: true,
       },
       {
-        type: "toggle",
-        name: "toggle-test",
-        active: true,
+        text: "off",
+        color: "neutral",
+        value: false,
+      },
+    ]
+  },
+  {
+    name: "auto_shoutout",
+    defs: [
+      {
+        text: "auto shoutout on",
+        color: "#ff0000",
+        value: true,
       },
       {
-        type: "label",
-        name: "label-test",
-        text: "hogehoge",
+        text: "auto shoutout off",
+        color: "#0000FF",
+        value: false,
       },
-    ],
+    ]
+  },
+  {
+    name: "colors",
+    defs: [
+      {
+        text: "base",
+        color: "base",
+        value: "base",
+      },
+      {
+        text: "info",
+        color: "info",
+        value: "info",
+      },
+      {
+        text: "success",
+        color: "success",
+        value: "success",
+      },
+      {
+        text: "warning",
+        color: "warning",
+        value: "warning",
+      },
+      {
+        text: "error",
+        color: "error",
+        value: "error",
+      },
+    ]
   },
 ];
 
@@ -77,7 +88,11 @@ const comp = new Component(emit);
 await comp.initialize({
   type: "panel",
   name: "main",
-  forms: defs,
+  args: {
+    width: 8,
+    height: 8,
+    cells,
+  },
 });
 
 const loop = async () => {
@@ -85,7 +100,11 @@ const loop = async () => {
     const field = await comp.process({
       type: "panel",
       name: "main",
-      forms: defs,
+      args: {
+        width: 8,
+        height: 8,
+        cells,
+      },
     });
     console.log(field);
     await setTimeout(1000);
