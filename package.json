@@ -16,9 +16,9 @@
   "main": "main.ts",
   "type": "module",
   "scripts": {
-    "start": "run-s start:frontend start:tester",
+    "start": "run-p start:frontend start:tester",
     "start:tester": "bun run --hot --bun test.ts",
-    "start:frontend": "run-p 'build:frontend:**'",
+    "start:frontend": "run-p 'start:frontend:**'",
     "start:frontend:bundle": "bun build --watch --outdir=./dist/ index.tsx",
     "start:frontend:html": "mkdir -p dist && cp index.html dist/index.html",
     "start:frontend:tailwind": "tailwindcss --watch -i index.css -o ./dist/index.css",

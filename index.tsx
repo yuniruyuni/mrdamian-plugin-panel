@@ -4,49 +4,84 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 
 import { fetcher } from "./fetcher";
-import type * as Model from "./model";
+import type * as Binding from "./model/binding";
 
-const Button: FC<Model.Button & Model.Status> = ({ name, status }) => {
+const Button: FC<Binding.Button & {root: string}> = ({ root, def, status }) => {
   const { trigger: emitClickEvent } = useSWRMutation("./forms", fetcher.post);
   return (
-    <button
-      type="button"
-      className="btn"
-      onClick={() => emitClickEvent({ name, click: true })}
-    >
-      {name}
-    </button>
+    <div className="m-2">
+      <button
+        type="button"
+        className="btn"
+        onClick={() => emitClickEvent({ name: `${root}{def.name}`, click: true })}
+      >
+        {status.text}
+      </button>
+    </div>
   );
 };
 
-const Toggle: FC<Model.Toggle & Model.Status> = ({ name, status }) => {
+const Toggle: FC<Binding.Toggle & { root: string }> = ({ root, def, status }) => {
   const { trigger: updateStatus } = useSWRMutation("./forms", fetcher.put);
-  return (<input
-    type="checkbox"
-    className="toggle"
-    aria-label={name}
-    onClick={() => updateStatus({ name, status: !status })}
-    checked={status}
-  />);
+  return (
+    <div className="m-2 flex flex-row gap-2">
+      <input
+        type="checkbox"
+        className="toggle"
+        aria-label={def.name}
+        onClick={() => updateStatus({
+          name: `${root}${def.name}`,
+          status: { active: !status.active },
+        })}
+        checked={status.active}
+      />
+      <label>{def.name}</label>
+    </div>
+  );
+};
+
+const Label: FC<Binding.Label & { root: string }> = ({ root, def, status }) => (
+  <div className="m-2">
+    <p>{def.name}: {status.text}</p>
+  </div>
+);
+
+const Group: FC<Binding.Group & { root: string }> = ({ root, name, subs }) => {
+  const subroot = `${root}${name}.`;
+  return (
+    <div className="relative border border-1 border-slate-200 rounded-xl border-solid bg-base-100 m-4 p-4">
+      <h2 className="absolute -top-4 bg-base-100">{name}</h2>
+      {subs.map((sub) => {
+        switch (sub.type) {
+          case "group": return (<Group key={sub.name} root={subroot} {...sub} />);
+          case "button": return (<Button key={sub.name} root={subroot} {...sub} />);
+          case "toggle": return (<Toggle key={sub.name} root={subroot} {...sub} />);
+          case "label": return (<Label key={sub.name} root={subroot} {...sub} />);
+        }
+      })}
+    </div>
+  );
 };
 
 const Root: FC = () => {
   const {
-    data: forms,
+    data: bindings,
     error,
     isLoading,
-  } = useSWR<Model.FormWithStatus[]>("./forms", fetcher.get);
+  } = useSWR<Binding.Binding[]>("./forms", fetcher.get);
 
   if (error) return <div>Error: {error.message}</div>;
-  if (!forms) return <div>Loading...</div>;
+  if (!bindings) return <div>Loading...</div>;
   if (isLoading) return <div>Loading...</div>;
 
-  return forms.map((form) => (
-    <div key={form.name}>
-      {form.type === "button" && (<Button {...form} />)}
-      {form.type === "toggle" && (<Toggle {...form} />)}
-    </div>
-  ));
+  return bindings.map((binding) => {
+    switch( binding.type ) {
+      case "button": return (<Button key={binding.def.name} root="" {...binding} />);
+      case "toggle": return (<Toggle key={binding.def.name} root="" {...binding} />);
+      case "label" : return (<Label key={binding.def.name} root="" {...binding} />);
+      case "group" : return (<Group key={binding.def.name} root="" {...binding} />);
+    }
+  });
 };
 
 const rootElm = document.getElementById("root");

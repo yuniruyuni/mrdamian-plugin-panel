@@ -1,5 +1,5 @@
 import path from "node:path";
-import { AutoRouter, json } from "itty-router";
+import { AutoRouter, error, json } from "itty-router";
 import {
   Component,
   type ComponentConfig,
@@ -7,7 +7,10 @@ import {
   type Field,
 } from "mrdamian-plugin";
 
-import type { Form, FormWithStatus, Status } from "./model";
+import { bindWithDefaultStatus } from "./model";
+import type { Binding } from "./model/binding";
+import type { Definition } from "./model/definition";
+import type { Status } from "./model/status";
 
 const sendFile = (rel: string) => {
   const f = Bun.file(path.join(import.meta.dir, rel));
@@ -16,7 +19,7 @@ const sendFile = (rel: string) => {
 
 export type InitConfig = ComponentConfig & {
   action?: "" | "init";
-  forms: Form[];
+  forms: Definition[];
 };
 
 export type UpdateConfig = ComponentConfig & {
@@ -36,21 +39,7 @@ function isInitConfig(config: PanelConfig): config is InitConfig {
 }
 
 export default class Panel extends Component<PanelConfig> {
-  config?: InitConfig;
-  statuses: Map<string, Status> = new Map();
-
-  currentForms(): FormWithStatus[] {
-    if (!this.config) {
-      return [];
-    }
-    return this.config.forms.map((form) => ({
-      ...form,
-      ...(this.statuses.get(form.name) ?? {
-        name: form.name,
-        status: false,
-      }),
-    }));
-  }
+  bindings: Binding[] = [];
 
   async fetch(): Promise<Fetch | undefined> {
     const router = AutoRouter();
@@ -59,63 +48,96 @@ export default class Panel extends Component<PanelConfig> {
       .get("/", async () => sendFile("dist/index.html"))
       .get("/index.js", async () => sendFile("dist/index.js"))
       .get("/index.css", async () => sendFile("dist/index.css"))
-      .get("/forms", async () => json(this.currentForms()))
+      .get("/forms", async () => json(this.bindings))
       .put("/forms", async (req: Request) => {
         const content = await req.json();
-        this.statuses.set(content.name, content);
-        return json({ status: "ok" });
+        const names = content.name.split(".");
+        const dig = (binds: Binding[], names: string[]) => {
+          const [name, ...rest] = names;
+          const b = binds.find((b) => b.name === name);
+          if( !b ) return undefined;
+          if( rest.length === 0 ) return b;
+          if( b.type !== "group" ) return undefined;
+          return dig(b.subs, rest);
+        };
+
+        const b = dig(this.bindings, names);
+        if( !b ) return error(404, { status: "error", detail: `target binding '${content.name}' does not exist` });
+        if( b.type === "group" ) return error(422, { status: "error", detail: `target binding '${content.name}' type is 'group' so it doesn't have status` });
+
+        b.status = content.status;
+
+        return json({ status: "ok", binding: b });
       })
       .post("/forms", async (req: Request) => {
         const content = await req.json();
         this.emit({ [content.name]: true });
         return json({ status: "ok" });
-      }).fetch;
+      })
+      .fetch;
   }
 
   public async initialize(config: PanelConfig): Promise<void> {
     if (!isInitConfig(config)) return;
-    this.config = config;
-    const setupStatuses = (forms: Form[]) => {
-      for (const form of forms) {
-        if (form.type === "group") {
-          return setupStatuses(form.forms);
-        }
-        // TODO: write type-wise default status deifnition.
-        this.statuses.set(form.name, { name: form.name, status: false });
-      }
-    };
-    setupStatuses(config.forms);
+    this.bindings = config.forms.map(bindWithDefaultStatus);
   }
 
   public async process(config: PanelConfig): Promise<Field> {
     if (isInitConfig(config)) {
-      const writeField = (forms: Form[]) => {
+      // initialize component discharge current status values into pipeline.
+      const writeField = (bindings: Binding[]) => {
         let field = {};
-        for (const form of config.forms) {
-          if (form.type === "group") {
-            field = {
-              ...field,
-              [form.name]: writeField(form.forms),
-            };
-          }
-
-          if (form.type === "toggle") {
-            field = {
-              ...field,
-              [form.name]: this.statuses.get(form.name)?.status,
-            };
+        for (const binding of bindings) {
+          switch( binding.type ) {
+            case "group":
+              field = {
+                ...field,
+                [binding.name]: writeField(binding.subs),
+              };
+              break;
+            case "button":
+              // non need to write status for buttons and labels.
+              break;
+            case "toggle":
+              field = {
+                ...field,
+                [binding.name]: binding.status.active,
+              };
+              break;
+            case "label":
+              // non need to write status for buttons and labels.
+              break;
           }
         }
         return field;
       };
-      return writeField(config.forms);
+      return writeField(this.bindings);
     }
 
     if (config.action === "update") {
+      const dig = (binds: Binding[], names: string[]): Binding | undefined => {
+        const [name, ...rest] = names;
+
+        const b = binds.find((b) => b.name === name);
+        if( !b ) return undefined;
+
+        if( b.type === "group" ) {
+          return dig(b.subs, rest);
+        }
+
+        return b;
+      };
+
       const status = config.args;
-      const current = this.statuses.get(status.name);
-      if (!current) return undefined;
-      this.statuses.set(status.name, status);
+      const names = status.name.split(".");
+      const b = dig(this.bindings, names);
+
+      if( !b ) return undefined;
+      if( b.type === "group" ) return undefined;
+      if( b.type === status.type ){
+        b.status = status;
+      }
+
       return undefined;
     }
 

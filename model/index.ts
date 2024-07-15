@@ -1,37 +1,17 @@
-// Button.
-// If user click on it, it will emit an event contains `name`.
-export type Button = {
-  type: "button";
+import type { Binding } from './binding';
+import type { Definition } from './definition';
+
+export const bindWithDefaultStatus = (def: Definition): Binding => {
+  const type = def.type;
+  const name = def.name;
+  switch (type) {
+    case "group":
+      return { type, name, def, subs: def.forms.map(bindWithDefaultStatus) };
+    case "toggle":
+      return { type, name, def, status: { type, name, active: def.active } };
+    case "button":
+      return { type, name, def, status: { type, name, text: def.text } };
+    case "label":
+      return { type, name, def, status: { type, name, text: def.text } };
+  }
 };
-
-// Toggle.
-// This form insert itown status into pipeline.
-// If user click on it, it flips the status.
-export type Toggle = {
-  type: "toggle";
-  status: boolean;
-};
-
-// Label.
-export type Label = {
-  type: "label";
-  text: string;
-};
-
-// Group.
-export type Group = {
-  type: "group";
-  forms: Form[];
-};
-
-export type Form = {
-  type: "button" | "toggle" | "label" | "group";
-  name: string;
-} & (Button | Toggle | Label | Group);
-
-export type Status = {
-  name: string;
-  status: boolean;
-};
-
-export type FormWithStatus = Form & Status;
