@@ -73,7 +73,7 @@ export default class Panel extends Component<PanelConfig> {
         };
 
         if( shouldEmit(b.cell) ) {
-          this.emit({ [content.name]: true });
+          this.emit({ [content.name]: b.current.value });
         }
 
         return json({ status: "ok" });
