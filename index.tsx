@@ -5,13 +5,16 @@ import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 
 import { fetcher } from "./fetcher";
-import type {Binding, Panel } from "./model";
+import type {Binding, Panels } from "./model";
 
 function isColorCode(color: string): boolean {
   return /^#[0-9a-fA-F]{6}$/.test(color);
 }
 
-const Button: FC<Binding> = ({ cell, current }) => {
+const Button: FC<{
+  id: string,
+  binding: Binding
+}> = ({ id, binding: { cell, current } }) => {
   const { trigger: emitClickEvent } = useSWRMutation("./forms", fetcher.post);
   return (
     <button
@@ -31,7 +34,7 @@ const Button: FC<Binding> = ({ cell, current }) => {
           ? { backgroundColor: current.color }
           : {}
       }
-      onClick={() => emitClickEvent({ name: cell.name })}
+      onClick={() => emitClickEvent({ id, name: cell.name })}
     >
       {current.text}
     </button>
@@ -48,29 +51,28 @@ function window<T,>(size: number, arr: T[]): T[][] {
 
 const Root: FC = () => {
   const {
-    data: panel,
+    data: panels,
     error,
     isLoading,
-  } = useSWR<Panel>("./forms", fetcher.get);
+  } = useSWR<Panels>("./forms", fetcher.get);
 
   if (error) return <div>Error: {error.message}</div>;
-  if (!panel) return <div>Loading...</div>;
+  if (!panels) return <div>Loading...</div>;
   if (isLoading) return <div>Loading...</div>;
 
-  return (
-    <div className={clsx(
-      "flex flex-1"
-    )}>
+  return Object.entries(panels).map(([id , panel]) => (
+    <div key={id} className="relative border border-1 border-slate-200 rounded-xl border-solid bg-base-100 m-4 p-4">
+      {panel.name && <h2 className="absolute -top-4 bg-base-100">{panel.name}</h2>}
       {
-        window(panel.width, panel.cells)
+        window(panel.width, panel.bindings)
           .map((w) =>
             <div key={w[0].cell.name} className="flex flex-row flex-1">
-              {w.map((binding) => <Button key={binding.cell.name} {...binding} />)}
+              {w.map((binding) => <Button key={binding.cell.name} id={id} binding={binding} />)}
             </div>
           )
       }
     </div>
-  )
+  ));
 };
 
 const rootElm = document.getElementById("root");

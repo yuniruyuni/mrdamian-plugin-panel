@@ -1,4 +1,4 @@
-import type { Field } from 'mrdamian-plugin';
+import type { EventEmitter, Field } from 'mrdamian-plugin';
 
 export type Color = string | "base" | "info" | "success" | "warning" | "error";
 
@@ -31,7 +31,11 @@ export type Binding = {
 };
 
 export type Panel = {
+  name?: string;
   width: number;
   height: number;
-  cells: Binding[];
+  bindings: Binding[];
+  emitter: EventEmitter;
 };
+
+export type Panels = { [key: string]: Panel };

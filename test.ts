@@ -1,10 +1,13 @@
 import { setTimeout } from "node:timers/promises";
 
+import type { Field } from "mrdamian-plugin";
 import Component from "./main";
 import type { Cell } from "./model";
 
 const emit = {
-  emit: () => {},
+  emit: (e: Field) => {
+    console.log(e);
+  },
 };
 
 const cells: Cell[] = [
@@ -84,28 +87,48 @@ const cells: Cell[] = [
   },
 ];
 
-const comp = new Component(emit);
+const comp = new Component();
 await comp.initialize({
+  id: "/0",
   type: "panel",
   name: "main",
+  action: "",
+}, emit);
+
+await comp.initialize({
+  id: "/1",
+  type: "panel",
+  name: "main",
+  action: "define",
   args: {
-    width: 8,
-    height: 8,
+    name: "shoutout",
+    width: 2,
+    height: 2,
     cells,
   },
-});
+}, emit);
 
 const loop = async () => {
   for (;;) {
-    const field = await comp.process({
+    await comp.process({
+      id: "/0",
       type: "panel",
       name: "main",
+      action: "",
+    }, emit);
+
+    const field = await comp.process({
+      id: "/1",
+      type: "panel",
+      name: "main",
+      action: "define",
       args: {
-        width: 8,
-        height: 8,
+        name: "shoutout",
+        width: 2,
+        height: 2,
         cells,
       },
-    });
+    }, emit);
     console.log(field);
     await setTimeout(1000);
   }
